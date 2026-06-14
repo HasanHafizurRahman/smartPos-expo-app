@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   StatusBar,
+  Image,
 } from "react-native";
 import { useDispatch } from "react-redux";
 import { loginApi } from "../services/api/authApi";
@@ -55,7 +56,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#0a5243" />
+      <StatusBar barStyle="light-content" backgroundColor="#041625" />
       
       {/* Background Graphic Accents */}
       <View style={styles.topCircle} />
@@ -67,10 +68,12 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.brandContainer}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoText}>M</Text>
-          </View>
-          <Text style={styles.brandName}>Mercato POS</Text>
+          <Image
+            source={require("../../assets/smartpos.png")}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.brandName}>SmartPOS</Text>
           <Text style={styles.brandSubtitle}>Manage operations on the go</Text>
         </View>
 
@@ -141,7 +144,7 @@ export default function LoginScreen() {
           </Pressable>
         </View>
 
-        <Text style={styles.footer}>© 2026 Mercato Inc. All rights reserved.</Text>
+        <Text style={styles.footer}>© 2026 SmartPOS. All rights reserved.</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -150,7 +153,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0d6a57", // Premium Deep HSL-tailored Teal
+    backgroundColor: "#041625", // Premium Deep Dark Navy Blue (matches theme.json primary.base)
   },
   scrollContent: {
     flexGrow: 1,
@@ -165,7 +168,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: "rgba(244, 201, 93, 0.12)", // Luxurious gold transparent accent
+    backgroundColor: "rgba(37, 99, 235, 0.15)", // Premium Blue Accent translucent circle
   },
   bottomCircle: {
     position: "absolute",
@@ -174,30 +177,16 @@ const styles = StyleSheet.create({
     width: 350,
     height: 350,
     borderRadius: 175,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
   },
   brandContainer: {
     alignItems: "center",
-    marginBottom: 36,
+    marginBottom: 30,
   },
-  logoBadge: {
-    width: 70,
-    height: 70,
-    borderRadius: 22,
-    backgroundColor: "#f4c95d", // Golden accent badge
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-    marginBottom: 16,
-  },
-  logoText: {
-    fontSize: 34,
-    fontWeight: "900",
-    color: "#111827",
+  logoImage: {
+    width: 110,
+    height: 110,
+    marginBottom: 14,
   },
   brandName: {
     fontSize: 28,
@@ -261,24 +250,24 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
   inputFocused: {
-    borderColor: "#0d6a57",
+    borderColor: "#2563EB", // Brand Blue active highlight
     backgroundColor: "#ffffff",
   },
   loginButton: {
-    backgroundColor: "#0d6a57",
+    backgroundColor: "#2563EB", // Brand Blue primary action
     borderRadius: 8,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
-    shadowColor: "#0d6a57",
+    shadowColor: "#2563EB",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
   },
   loginButtonPressed: {
-    backgroundColor: "#0a5243",
+    backgroundColor: "#1D4ED8", // Darker blue on press
   },
   loginButtonDisabled: {
     opacity: 0.7,
