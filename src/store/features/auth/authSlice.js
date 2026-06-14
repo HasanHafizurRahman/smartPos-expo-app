@@ -13,7 +13,7 @@ const initialState = {
 // Thunk: fetch current user & their details (including photoUrl)
 export const loadCurrentUser = createAsyncThunk(
   "auth/loadCurrentUser",
-  async (_, { rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue }) => {
     try {
       const currResp = await getCurrentUser();
       if (!currResp.data.success) {
@@ -24,6 +24,15 @@ export const loadCurrentUser = createAsyncThunk(
       if (!userResp.data.success) {
         return rejectWithValue("Failed to fetch user by ID");
       }
+
+      // Load company configuration dynamically
+      try {
+        const { loadCompanyConfigInit } = require("../company/companySlice");
+        dispatch(loadCompanyConfigInit());
+      } catch (configErr) {
+        console.log("Failed to load company config init in background", configErr);
+      }
+
       // Save details to secure store for offline caching
       await SecureStore.setItemAsync("user", JSON.stringify(userResp.data.obj));
       return userResp.data.obj;
@@ -47,6 +56,16 @@ export const performLogout = createAsyncThunk(
       await SecureStore.deleteItemAsync("authToken");
       await SecureStore.deleteItemAsync("user");
       await SecureStore.deleteItemAsync("tokenExpiry");
+
+      // Dynamic cleanup of menu and company slices to prevent circular imports
+      try {
+        const { clearMenu } = require("../menu/menuSlice");
+        const { clearCompanyConfig } = require("../company/companySlice");
+        dispatch(clearMenu());
+        dispatch(clearCompanyConfig());
+      } catch (cleanErr) {
+        console.log("Failed to clean up store slices on logout", cleanErr);
+      }
     }
   }
 );

@@ -9,10 +9,14 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Dimensions,
+  Image,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigation } from "@react-navigation/native";
 import { performLogout } from "../store/features/auth/authSlice";
 import { loadUserMenu } from "../store/features/menu/menuSlice";
+import { loadCompanyConfigInit } from "../store/features/company/companySlice";
+import useCompanyConfig from "../hooks/useCompanyConfig";
 import { getDashboard } from "../services/api/report/reportApi";
 import Svg, { Path, Rect, Circle } from "react-native-svg";
 import { LineChart, PieChart, BarChart } from "react-native-gifted-charts";
@@ -77,17 +81,32 @@ const ClearIcon = ({ size = 14, color = "#4B5563" }) => (
 );
 
 const LogoutIcon = ({ size = 18, color = "#EF4444" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
     <Path d="M16 17l5-5-5-5" />
     <Path d="M21 12H9" />
   </Svg>
 );
 
+const SettingsIcon = ({ size = 20, color = "#2563EB" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <Circle cx="12" cy="12" r="3" />
+    <Path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </Svg>
+);
+
+const SecurityIcon = ({ size = 20, color = "#10B981" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </Svg>
+);
+
 export default function HomeScreen() {
   const dispatch = useDispatch();
+  const navigation = useNavigation();
   const { user, token, isLoading: authLoading } = useSelector((state) => state.auth);
   const { items: menuItems, isLoading: menuLoading } = useSelector((state) => state.menu);
+  const { config, logoUrl, imageHeaders } = useCompanyConfig();
 
   // Dashboard state
   const [loading, setLoading] = useState(false);
@@ -107,10 +126,11 @@ export default function HomeScreen() {
     last10DaysSalesTrend: [],
   });
 
-  // Load menu permissions
+  // Load menu permissions and company configuration on mount/user change
   useEffect(() => {
     if (user && user.userId) {
       dispatch(loadUserMenu(user.userId));
+      dispatch(loadCompanyConfigInit());
     }
   }, [user, dispatch]);
 
@@ -257,6 +277,11 @@ export default function HomeScreen() {
     ),
   }));
 
+  const isSystemAdmin = !!(user?.isAdmin || user?.isSuperAdmin);
+  const canAccessSettings = isSystemAdmin || !!(menuItems && menuItems.some(item => item.menuCode === "SETTINGS" || item.menuName?.toLowerCase() === "settings"));
+  const canAccessRoles = isSystemAdmin || !!(menuItems && menuItems.some(item => item.menuCode === "ROLES" || item.menuName?.toLowerCase() === "roles" || item.menuName?.toLowerCase() === "roles & permissions"));
+  const showAdminPanel = canAccessSettings || canAccessRoles;
+
   if (authLoading && !user) {
     return (
       <View style={styles.center}>
@@ -269,6 +294,24 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FCFC" />
+
+      {/* Corporate branding header */}
+      <View style={styles.companyHeaderBar}>
+        {logoUrl ? (
+          <Image
+            source={{ uri: logoUrl, headers: imageHeaders }}
+            style={styles.companyLogoHeader}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={[styles.companyLogoHeader, { alignItems: "center", justifyContent: "center" }]}>
+            <Text style={{ fontSize: 13, fontWeight: "900", color: "#2563EB" }}>SP</Text>
+          </View>
+        )}
+        <Text style={styles.companyNameText}>
+          {config?.COMPANY_NAME || "SmartPOS Solutions"}
+        </Text>
+      </View>
 
       {/* Premium Profile Header Panel */}
       <View style={styles.profileHeader}>
@@ -575,6 +618,44 @@ export default function HomeScreen() {
               )}
             </View>
           </>
+        )}
+
+        {/* Terminal Administration Panel */}
+        {showAdminPanel && (
+          <View style={[styles.sectionContainer, { marginBottom: 18 }]}>
+            <Text style={styles.sectionHeaderTitle}>Terminal Administration</Text>
+            <View style={styles.adminGrid}>
+              {canAccessSettings && (
+                <Pressable
+                  style={({ pressed }) => [styles.adminCard, pressed && styles.adminCardPressed]}
+                  onPress={() => navigation.navigate("Settings")}
+                >
+                  <View style={[styles.iconCircle, { backgroundColor: "#EFF6FF" }]}>
+                    <SettingsIcon color="#2563EB" />
+                  </View>
+                  <View style={styles.adminCardMeta}>
+                    <Text style={styles.adminCardTitle}>Company Settings</Text>
+                    <Text style={styles.adminCardDesc}>Branding and configs</Text>
+                  </View>
+                </Pressable>
+              )}
+
+              {canAccessRoles && (
+                <Pressable
+                  style={({ pressed }) => [styles.adminCard, pressed && styles.adminCardPressed]}
+                  onPress={() => navigation.navigate("RolesPermissions")}
+                >
+                  <View style={[styles.iconCircle, { backgroundColor: "#ECFDF5" }]}>
+                    <SecurityIcon color="#10B981" />
+                  </View>
+                  <View style={styles.adminCardMeta}>
+                    <Text style={styles.adminCardTitle}>Roles & Tree</Text>
+                    <Text style={styles.adminCardDesc}>Manage user permissions</Text>
+                  </View>
+                </Pressable>
+              )}
+            </View>
+          </View>
         )}
 
         {/* Authorized Modules Section */}
@@ -1045,5 +1126,62 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#9CA3AF",
     fontStyle: "italic",
+  },
+  companyHeaderBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0F172A",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  companyLogoHeader: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: "#FFFFFF",
+  },
+  companyNameText: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+  adminGrid: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  adminCard: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderColor: "#E5E7EB",
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  adminCardPressed: {
+    backgroundColor: "#F3F4F6",
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  adminCardMeta: {
+    flex: 1,
+  },
+  adminCardTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#111827",
+  },
+  adminCardDesc: {
+    fontSize: 10,
+    color: "#6B7280",
+    marginTop: 2,
   },
 });

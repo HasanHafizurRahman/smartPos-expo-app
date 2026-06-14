@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { useDispatch } from "react-redux";
 import { loginApi } from "../services/api/authApi";
-import { setAuth } from "../store/features/auth/authSlice";
+import { setAuth, loadCurrentUser } from "../store/features/auth/authSlice";
 
 export default function LoginScreen() {
   const dispatch = useDispatch();
@@ -39,6 +39,7 @@ export default function LoginScreen() {
         // According to flow: dispatch(setAuth({ user: null, token: token }))
         // Then profile is loaded in background/App initialization
         dispatch(setAuth({ user: null, token: response.obj }));
+        dispatch(loadCurrentUser());
       } else {
         setErrorMessage(response.message || "Invalid username or password.");
       }
