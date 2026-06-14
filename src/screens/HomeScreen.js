@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
+  Platform,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
@@ -1144,7 +1145,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#0F172A",
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingTop: Platform.OS === "android" ? 44 : 12,
+    paddingBottom: 12,
     gap: 10,
   },
   companyLogoHeader: {
